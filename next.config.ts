@@ -1,12 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
-  distDir: "docs",
-  basePath: "/label2026",
-  images: {
-    unoptimized: true,
-  },
+  /* config options here */
 };
 
 export default nextConfig;
