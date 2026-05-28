@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "vercel-build": "rm -rf dist && mkdir -p dist && cp index.html dist/index.html && cp -R assets dist/assets"
+  }
+}
