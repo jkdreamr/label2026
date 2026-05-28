@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOVUM — Artists building the tools behind their art.</title>
+  <meta name="description" content="A label and creative lab for musicians, visual artists, performers, and technologists creating new forms of culture." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Shippori+Mincho:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #07060a;
+      --bg-warm:    #0d0c0f;
+      --text:       #e2d9cc;
+      --text-mid:   #8c8278;
+      --text-dim:   #4a443e;
+      --accent:     #1a3ef5;
+      --accent-glow:rgba(26, 62, 245, 0.18);
+      --stone:      #9a8c7c;
+      --border:     rgba(226,217,204,0.07);
+      --border-mid: rgba(226,217,204,0.14);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Cormorant Garant', serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── Grain overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 9000;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 300px;
+    }
+
+    /* ── Custom cursor ── */
+    #cursor {
+      position: fixed;
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: background 0.2s;
+    }
+    #cursor-ring {
+      position: fixed;
+      width: 28px; height: 28px;
+      border: 1px solid rgba(226,217,204,0.25);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: transform 0.08s ease-out, border-color 0.3s, width 0.3s, height 0.3s;
+    }
+    body:has(a:hover) #cursor-ring,
+    body:has(.join-card:hover) #cursor-ring,
+    body:has(.project-card:hover) #cursor-ring {
+      width: 52px; height: 52px;
+      border-color: rgba(26,62,245,0.45);
+    }
+
+    /* ── Loading overlay ── */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      will-change: opacity, transform;
+    }
+    #loading-overlay span {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.35em;
+      color: var(--text);
+    }
+
+    /* ── Atmospheric vertical lines ── */
+    .atm-line {
+      position: fixed;
+      top: 0; bottom: 0;
+      width: 1px;
+      background: var(--border);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .atm-l1 { left: 22%; }
+    .atm-l2 { left: 50%; }
+    .atm-l3 { right: 22%; }
+
+    /* ── Side dots ── */
+    #side-nav {
+      position: fixed;
+      left: 28px; top: 50%;
+      transform: translateY(-50%);
+      display: flex; flex-direction: column;
+      gap: 14px;
+      z-index: 500;
+    }
+    .sdot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      cursor: pointer;
+      transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+    .sdot.active {
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      transform: scale(1.4);
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 30px 52px;
+    }
+    nav::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 52px; right: 52px;
+      height: 1px;
+      background: var(--border);
+    }
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex; gap: 44px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--text-mid);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width 0.35s ease;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-grid-icon {
+      display: grid;
+      grid-template-columns: repeat(3,4px);
+      gap: 4px;
+      cursor: pointer;
+    }
+    .nav-grid-icon span {
+      display: block; width: 4px; height: 4px;
+      background: var(--text-dim);
+      border-radius: 50%;
+      transition: background 0.3s;
+    }
+    .nav-grid-icon:hover span { background: var(--text); }
+
+    /* ── HERO ── */
+    #hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 52px 90px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-radial {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 65% 45%, rgba(26,62,245,0.05) 0%, transparent 55%),
+        radial-gradient(ellipse at 25% 85%, rgba(154,140,124,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero-kana {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      color: var(--text-dim);
+      margin-bottom: 22px;
+      opacity: 0;
+    }
+    .hero-title {
+      font-size: clamp(80px, 11.5vw, 156px);
+      font-weight: 300;
+      line-height: 0.88;
+      letter-spacing: -0.025em;
+      overflow: hidden;
+      opacity: 0;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--stone);
+    }
+    .hero-sub {
+      margin-top: 36px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--text-mid);
+      line-height: 2;
+      max-width: 300px;
+      opacity: 0;
+    }
+    /* Scroll indicator */
+    .scroll-cue {
+      position: absolute;
+      right: 52px; bottom: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      opacity: 0;
+    }
+    .scroll-cue-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      color: var(--text-dim);
+      writing-mode: vertical-rl;
+    }
+    .scroll-cue-bar {
+      width: 1px; height: 56px;
+      background: var(--border-mid);
+      position: relative; overflow: hidden;
+    }
+    .scroll-cue-bar::after {
+      content: '';
+      position: absolute;
+      top: -100%; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(to bottom, transparent, var(--accent));
+      animation: barSlide 2.2s ease-in-out infinite 1.2s;
+    }
+    @keyframes barSlide {
+      0%   { top: -100%; opacity: 0; }
+      20%  { opacity: 1; }
+      80%  { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* ── SCROLL NARRATIVE SECTION ── */
+    #story {
+      position: relative;
+    }
+    .story-panels-scroll {
+      /* 4 panels × 120vh each → 480vh total scroll distance */
+      height: 480vh;
+    }
+    .story-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: stretch;
+    }
+
+    /* Figure side */
+    .figure-side {
+      position: relative;
+      flex: 0 0 52%;
+      overflow: hidden;
+    }
+    .figure-art {
+      width: 100%; height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    .figure-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.65) contrast(1.15) grayscale(0.15) sepia(0.05);
+      display: block;
+    }
+    /* Edge fades */
+    .figure-fade-left {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 120px;
+      background: linear-gradient(to right, var(--bg), transparent);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .figure-fade-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 160px;
+      background: linear-gradient(to bottom, var(--bg), transparent);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .figure-fade-bot {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 160px;
+      background: linear-gradient(to top, var(--bg), transparent);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Text side */
+    .text-side {
+      flex: 0 0 48%;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .story-panel {
+      position: absolute;
+      padding: 0 64px;
+      opacity: 0;
+      pointer-events: none;
+      will-change: opacity, transform;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .story-panel.from-right { transform: translateX(48px); }
+    .story-panel.from-left  { transform: translateX(-48px); }
+
+    .panel-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .panel-eyebrow::before {
+      content: '';
+      display: block;
+      width: 28px; height: 1px;
+      background: var(--accent);
+    }
+    .panel-h {
+      font-size: clamp(38px, 4.2vw, 60px);
+      font-weight: 300;
+      line-height: 1.08;
+      letter-spacing: -0.015em;
+      margin-bottom: 28px;
+    }
+    .panel-h em { font-style: italic; color: var(--stone); }
+    .panel-body {
+      font-size: 14px;
+      line-height: 1.95;
+      color: var(--text-mid);
+      max-width: 340px;
+    }
+
+    /* Panels positioned alternating left/right within text-side */
+    /* panel-0 → text on right (figure left) */
+    /* panel-1 → figure on right, text on left */
+    /* panel-2 → text on right again */
+    /* panel-3 → figure on right, text on left */
+    /* We flip the whole row order via a JS class on .story-sticky */
+    .story-sticky.flip .figure-side { order: 2; }
+    .story-sticky.flip .text-side   { order: 1; }
+    .story-sticky.flip .figure-fade-left {
+      left: auto; right: 0;
+      background: linear-gradient(to left, var(--bg), transparent);
+    }
+
+    /* ── ARTISTS ── */
+    #artists {
+      padding: 140px 52px 120px;
+      position: relative;
+    }
+    .section-label-row {
+      display: flex;
+      align-items: baseline;
+      gap: 28px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 72px;
+    }
+    .section-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+    }
+    .section-heading {
+      font-size: clamp(30px, 3.5vw, 46px);
+      font-weight: 300;
+      letter-spacing: -0.01em;
+    }
+    .section-jp {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-left: auto;
+      letter-spacing: 0.12em;
+    }
+
+    .artists-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .artist-card {
+      padding: 56px 48px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.4s;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    .artist-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(140deg, rgba(26,62,245,0.04) 0%, transparent 55%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .artist-card:hover { border-color: var(--border-mid); }
+    .artist-card:hover::before { opacity: 1; }
+    .artist-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.35em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .artist-name {
+      font-size: clamp(34px, 3.8vw, 52px);
+      font-weight: 300;
+      line-height: 1.0;
+      margin-bottom: 6px;
+    }
+    .artist-name-sub {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 15px;
+      color: var(--text-dim);
+      display: block;
+      margin-bottom: 28px;
+    }
+    .artist-desc {
+      font-size: 13px;
+      line-height: 1.95;
+      color: var(--text-mid);
+      max-width: 280px;
+    }
+    .artist-meta {
+      margin-top: 36px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+    }
+    .artist-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 32px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid var(--border-mid);
+      padding-bottom: 5px;
+      transition: border-color 0.3s, gap 0.3s;
+    }
+    .artist-link:hover { border-color: var(--text); gap: 16px; }
+
+    /* ── PROJECTS ── */
+    #projects {
+      padding: 140px 52px 120px;
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+    .project-card {
+      border: 1px solid var(--border);
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.4s;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    .project-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(140deg, rgba(26,62,245,0.06) 0%, transparent 58%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .project-card:hover { border-color: var(--border-mid); }
+    .project-card:hover::before { opacity: 1; }
+    .project-label,
+    .project-title,
+    .project-desc {
+      position: relative;
+      z-index: 1;
+    }
+    .project-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.28em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .project-title {
+      font-size: clamp(28px, 3vw, 42px);
+      font-weight: 300;
+      line-height: 1.05;
+      margin-bottom: 18px;
+    }
+    .project-desc {
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text-mid);
+    }
+
+    /* ── JOIN ── */
+    #join {
+      padding: 140px 52px 120px;
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+    .join-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: end;
+    }
+    .join-left {}
+    .join-title {
+      font-size: clamp(52px, 7.5vw, 108px);
+      font-weight: 300;
+      line-height: 0.92;
+      letter-spacing: -0.025em;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .join-title em { font-style: italic; color: var(--stone); }
+    .join-title-jp {
+      font-family: 'Shippori Mincho', serif;
+      display: block;
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.2em;
+      margin-top: 20px;
+      opacity: 0;
+    }
+    .join-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      opacity: 0;
+      transform: translateX(24px);
+    }
+    .join-card {
+      display: block;
+      padding: 32px 36px;
+      border: 1px solid var(--border);
+      text-decoration: none;
+      transition: border-color 0.35s, background 0.35s;
+      position: relative;
+    }
+    .join-card:hover {
+      border-color: var(--border-mid);
+      background: rgba(226,217,204,0.02);
+    }
+    .join-card-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.35em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .join-card-title {
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .join-card-desc {
+      font-size: 13px;
+      color: var(--text-mid);
+      line-height: 1.75;
+    }
+    .join-card-arrow {
+      position: absolute;
+      right: 32px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: var(--text-dim);
+      transition: color 0.3s, right 0.3s;
+    }
+    .join-card:hover .join-card-arrow {
+      color: var(--text);
+      right: 24px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 36px 52px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: var(--text-dim);
+    }
+    .footer-links {
+      display: flex; gap: 32px;
+      list-style: none;
+    }
+    .footer-links a {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+    }
+
+    /* ── Utility ── */
+    .invisible { opacity: 0; }
+
+    @media (max-width: 768px) {
+      body {
+        cursor: auto;
+      }
+      #cursor,
+      #cursor-ring {
+        display: none;
+      }
+      nav {
+        padding: 20px 24px;
+      }
+      nav::after {
+        left: 24px; right: 24px;
+      }
+      .nav-logo {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+      }
+      .nav-links {
+        gap: 16px;
+      }
+      .nav-links a {
+        font-size: 9px;
+        letter-spacing: 0.12em;
+      }
+      .nav-grid-icon {
+        display: none;
+      }
+      .atm-line,
+      #side-nav {
+        display: none;
+      }
+      #hero,
+      #artists,
+      #projects,
+      #join {
+        padding: 80px 24px;
+      }
+      .hero-title {
+        font-size: clamp(52px, 14vw, 80px);
+      }
+      .scroll-cue {
+        right: 24px;
+        bottom: 80px;
+      }
+      .story-sticky {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: 45vh 55vh;
+      }
+      .story-sticky.flip .figure-side,
+      .story-sticky.flip .text-side {
+        order: 0;
+      }
+      .figure-side {
+        flex: none;
+        height: 45vh;
+      }
+      .text-side {
+        flex: none;
+        width: 100%;
+        min-height: 55vh;
+        padding: 0 24px;
+      }
+      .story-panel {
+        width: 100%;
+        padding: 0;
+      }
+      .panel-h {
+        font-size: clamp(34px, 10vw, 52px);
+      }
+      .artists-grid,
+      .projects-grid,
+      .join-inner {
+        grid-template-columns: 1fr;
+      }
+      .section-label-row {
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 48px;
+      }
+      .section-jp {
+        display: none;
+      }
+      .artist-card,
+      .project-card {
+        padding: 40px 32px;
+      }
+      footer {
+        padding: 32px 24px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .nav-logo {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+      }
+      .nav-links {
+        gap: 12px;
+      }
+      .nav-links a {
+        font-size: 8px;
+        letter-spacing: 0.08em;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading-overlay" aria-hidden="true"><span>NOVUM</span></div>
+
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Atmospheric lines -->
+<div class="atm-line atm-l1"></div>
+<div class="atm-line atm-l2"></div>
+<div class="atm-line atm-l3"></div>
+
+<!-- Side nav dots -->
+<div id="side-nav">
+  <div class="sdot active" data-target="hero"></div>
+  <div class="sdot" data-target="story"></div>
+  <div class="sdot" data-target="artists"></div>
+  <div class="sdot" data-target="projects"></div>
+  <div class="sdot" data-target="join"></div>
+</div>
+
+<!-- ── Navigation ── -->
+<nav>
+  <a href="#hero" class="nav-logo">NOVUM</a>
+  <ul class="nav-links">
+    <li><a href="#story">About</a></li>
+    <li><a href="#artists">Artists</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#join">Join</a></li>
+  </ul>
+  <div class="nav-grid-icon" aria-hidden="true">
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-radial"></div>
+  <p class="hero-kana">新しい文化の形を作る</p>
+  <h1 class="hero-title">NOVUM<br><em>Label</em></h1>
+  <p class="hero-sub">Artists building the tools<br>behind their art.<br>Music · Visuals · Technology.</p>
+  <div class="scroll-cue">
+    <span class="scroll-cue-text">SCROLL</span>
+    <div class="scroll-cue-bar"></div>
+  </div>
+</section>
+
+<!-- ── SCROLL NARRATIVE ── -->
+<section id="story">
+  <div class="story-panels-scroll">
+    <div class="story-sticky" id="storySticky">
+
+      <!-- LEFT: Figure (art/photo goes here) -->
+      <div class="figure-side">
+        <div class="figure-art" id="figureArt">
+          <img class="figure-img" src="./assets/figure.jpg" alt="" />
+          <div class="figure-fade-left"></div>
+          <div class="figure-fade-top"></div>
+          <div class="figure-fade-bot"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Text panels -->
+      <div class="text-side">
+        <!-- Panel 0 -->
+        <div class="story-panel from-right" id="sp0">
+          <div class="panel-eyebrow">00 / Ethos</div>
+          <h2 class="panel-h">The Artist<br>is the <em>Studio.</em></h2>
+          <p class="panel-body">NOVUM exists for artists who treat technology as part of the work itself. Not to automate creativity — but to expand what an artist can be.</p>
+        </div>
+        <!-- Panel 1 -->
+        <div class="story-panel from-left" id="sp1">
+          <div class="panel-eyebrow">01 / Collective</div>
+          <h2 class="panel-h">A New<br><em>Form</em> of<br>Culture.</h2>
+          <p class="panel-body">A label. A collective. A creative lab for musicians, visual artists, and technologists who build the instruments behind their own expression.</p>
+        </div>
+        <!-- Panel 2 -->
+        <div class="story-panel from-right" id="sp2">
+          <div class="panel-eyebrow">02 / Systems</div>
+          <h2 class="panel-h">Every<br>Release is<br>a <em>World.</em></h2>
+          <p class="panel-body">Sound, visual, and social systems built around each work. Not just a song — but the complete architecture of an artistic moment.</p>
+        </div>
+        <!-- Panel 3 -->
+        <div class="story-panel from-left" id="sp3">
+          <div class="panel-eyebrow">03 / Sessions</div>
+          <h2 class="panel-h">Live <em>Between</em><br>Worlds.</h2>
+          <p class="panel-body">Not a concert. Not a demo day. NOVUM Sessions are live events at the intersection of performance, technology, and culture.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── ARTISTS ── -->
+<section id="artists">
+  <div class="section-label-row">
+    <span class="section-num">02</span>
+    <h2 class="section-heading">Founding Artists.</h2>
+    <span class="section-jp">創設アーティスト</span>
+  </div>
+  <div class="artists-grid">
+    <div class="artist-card" id="ac0">
+      <div class="artist-tag">Founding Artist</div>
+      <h3 class="artist-name">Joshua Koo</h3>
+      <span class="artist-name-sub">구 / 아티스트</span>
+      <p class="artist-desc">Artist, producer, and builder. AI-assisted systems for recording, release strategy, and world-building. Stanford · Seoul · San Francisco.</p>
+      <div class="artist-meta">MUSIC · PRODUCTION · SYSTEMS</div>
+      <a href="#" class="artist-link">View Work →</a>
+    </div>
+    <div class="artist-card" id="ac1">
+      <div class="artist-tag">Founding Artist</div>
+      <h3 class="artist-name">Anna Matsumoto</h3>
+      <span class="artist-name-sub">松本 / クリエイティブ技術者</span>
+      <p class="artist-desc">Creative technologist and HCI researcher. Interfaces for expression across sound, movement, touch, and visual media. Stanford · Berkeley · SF.</p>
+      <div class="artist-meta">HCI · TOUCH · VISUALS</div>
+      <a href="https://www.matsumotoanna.com/" class="artist-link">View Work →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── PROJECTS ── -->
+<section id="projects">
+  <div class="section-label-row">
+    <span class="section-num">03</span>
+    <h2 class="section-heading">Projects in Motion.</h2>
+    <span class="section-jp">進行中のプロジェクト</span>
+  </div>
+  <div class="projects-grid">
+    <article class="project-card" id="pc0">
+      <div class="project-label">01 / MUSIC · TOOL</div>
+      <h3 class="project-title">Voice Memo to World</h3>
+      <p class="project-desc">A release system that turns raw sketches into finished sonic identities.</p>
+    </article>
+    <article class="project-card" id="pc1">
+      <div class="project-label">02 / LIVE · INTERFACE</div>
+      <h3 class="project-title">Stageware</h3>
+      <p class="project-desc">Performance software for artists shaping visuals, sound, and room energy.</p>
+    </article>
+    <article class="project-card" id="pc2">
+      <div class="project-label">03 / CULTURE · SYSTEM</div>
+      <h3 class="project-title">World Index</h3>
+      <p class="project-desc">A shared archive for the references, rituals, and signals behind each release.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ── JOIN ── -->
+<section id="join">
+  <div class="join-inner">
+    <div class="join-left">
+      <h2 class="join-title">Join<br>the <em>First<br>Circle.</em></h2>
+      <span class="join-title-jp">最初の輪に加わる</span>
+    </div>
+    <div class="join-cards">
+      <a href="mailto:hello@novum.example" class="join-card">
+        <div class="join-card-tag">Path A</div>
+        <div class="join-card-title">Apply as Artist</div>
+        <div class="join-card-desc">Musicians, visual artists, filmmakers, performers, designers, and hybrid creators.</div>
+        <span class="join-card-arrow">→</span>
+      </a>
+      <a href="mailto:hello@novum.example" class="join-card">
+        <div class="join-card-tag">Path B</div>
+        <div class="join-card-title">Apply as Builder</div>
+        <div class="join-card-desc">Engineers, creative technologists, editors, event producers, and people who make strange ideas real.</div>
+        <span class="join-card-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <span class="footer-logo">NOVUM</span>
+  <ul class="footer-links">
+    <li><a href="#">Instagram</a></li>
+    <li><a href="#">TikTok</a></li>
+    <li><a href="mailto:hello@novum.example">Contact</a></li>
+  </ul>
+  <span class="footer-copy">© 2026 NOVUM</span>
+</footer>
+
+<!-- ════════════════════════════════════════════ SCRIPTS ═══════ -->
+<script>
+// ── Custom cursor ─────────────────────────────────────────────
+const cursor     = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top  = my + 'px';
+});
+
+(function animRing() {
+  rx += (mx - rx) * 0.1;
+  ry += (my - ry) * 0.1;
+  cursorRing.style.left = rx + 'px';
+  cursorRing.style.top  = ry + 'px';
+  requestAnimationFrame(animRing);
+})();
+
+
+// ── Page loading + hero entrance ──────────────────────────────
+function playHeroEntrance() {
+  anime.timeline({ easing: 'easeOutExpo' })
+    .add({ targets: '.hero-kana',  opacity: [0,1], translateY: [8,0],  duration: 900 }, 200)
+    .add({ targets: '.hero-title', opacity: [0,1], translateY: [50,0], duration: 1100 }, 500)
+    .add({ targets: '.hero-sub',   opacity: [0,1], translateY: [18,0], duration: 800 },  900)
+    .add({ targets: '.scroll-cue', opacity: [0,1],                    duration: 600 }, 1300);
+}
+
+function exitLoadingOverlay() {
+  const overlay = document.getElementById('loading-overlay');
+  anime({
+    targets: overlay,
+    opacity: [1, 0],
+    translateY: [0, '-100%'],
+    duration: 900,
+    easing: 'easeInOutCubic',
+    complete: () => {
+      overlay.style.display = 'none';
+      playHeroEntrance();
+    }
+  });
+}
+
+window.addEventListener('load', () => {
+  setTimeout(exitLoadingOverlay, 800);
+});
+
+
+// ── Scroll narrative ─────────────────────────────────────────
+const storySection = document.getElementById('story');
+const storySticky  = document.getElementById('storySticky');
+const figureArt    = document.getElementById('figureArt');
+const panels       = [
+  document.getElementById('sp0'),
+  document.getElementById('sp1'),
+  document.getElementById('sp2'),
+  document.getElementById('sp3'),
+];
+
+// Panels 1 and 3 text-side swap sides (figure right, text left)
+// We implement this by keeping figure always rendering, but toggling
+// a CSS class that reverses column order on sticky container.
+const panelFlip = [false, true, false, true]; // whether to flip layout for each panel
+
+let activePanelIdx = -1;
+let rotY = 0; // current displayed rotateY
+
+function hidePanel(panel, panelIdx) {
+  panel.style.opacity = 0;
+  panel.style.pointerEvents = 'none';
+  panel.style.transform = `translateX(${panelFlip[panelIdx] ? -48 : 48}px)`;
+}
+
+function showPanel(idx) {
+  panels.forEach((panel, panelIdx) => {
+    if (!panel) return;
+    anime.remove(panel);
+    if (panelIdx === idx) {
+      panel.style.opacity = 1;
+      panel.style.pointerEvents = 'auto';
+      panel.style.transform = 'translateX(0px)';
+    } else {
+      hidePanel(panel, panelIdx);
+    }
+  });
+
+  activePanelIdx = idx;
+  storySticky.classList.toggle('flip', panelFlip[idx]);
+}
+
+// Smooth rotation tracking
+let targetRotY = 0;
+(function animFigure() {
+  rotY += (targetRotY - rotY) * 0.06;
+  const scl = 1 + 0.06 * Math.sin(rotY * Math.PI / 180);
+  figureArt.style.transform = `perspective(1200px) rotateY(${rotY}deg) scale(${scl})`;
+  requestAnimationFrame(animFigure);
+})();
+
+window.addEventListener('scroll', () => {
+  const sTop    = storySection.offsetTop;
+  const sHeight = storySection.scrollHeight;
+  const scrolled = window.scrollY - sTop;
+  const progress = Math.max(0, Math.min(1, scrolled / (sHeight - window.innerHeight)));
+
+  // Map progress → panel index
+  const pIdx = progress < 0.25 ? 0 : progress < 0.5 ? 1 : progress < 0.75 ? 2 : 3;
+  showPanel(pIdx);
+
+  // Map progress → figure rotation (0 → 270° across the section)
+  targetRotY = progress * 270;
+});
+
+// Init first panel
+showPanel(0);
+
+
+// ── Artist card reveals ───────────────────────────────────────
+const cardObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    anime({
+      targets: entry.target,
+      opacity: [0, 1],
+      translateY: [24, 0],
+      duration: 900,
+      easing: 'easeOutExpo',
+    });
+    cardObserver.unobserve(entry.target);
+  });
+}, { threshold: 0.25 });
+
+['ac0','ac1','pc0','pc1','pc2'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) cardObserver.observe(el);
+});
+
+
+// ── Join section reveal ───────────────────────────────────────
+const joinObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    anime.timeline({ easing: 'easeOutExpo' })
+      .add({ targets: '.join-title',    opacity:[0,1], translateY:[30,0], duration: 900 })
+      .add({ targets: '.join-title-jp', opacity:[0,1], translateY:[12,0], duration: 700 }, '-=600')
+      .add({ targets: '.join-cards',    opacity:[0,1], translateX:[24,0], duration: 800 }, '-=700');
+    joinObserver.disconnect();
+  });
+}, { threshold: 0.2 });
+
+const joinSec = document.getElementById('join');
+if (joinSec) joinObserver.observe(joinSec);
+
+
+// ── Side nav dot tracking ─────────────────────────────────────
+const navSections = ['hero','story','artists','projects','join'];
+const dots        = document.querySelectorAll('.sdot');
+
+dots.forEach(dot => {
+  dot.addEventListener('click', () => {
+    const el = document.getElementById(dot.dataset.target);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+const dotObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const idx = navSections.indexOf(entry.target.id);
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  });
+}, { threshold: 0.4 });
+
+navSections.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) dotObserver.observe(el);
+});
+</script>
+</body>
+</html>
